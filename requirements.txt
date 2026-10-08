@@ -1,0 +1,4 @@
+# Stage 1 — download
+kaggle
+
+# Later stages (inspection, cleaning, linking) will add their packages here.
