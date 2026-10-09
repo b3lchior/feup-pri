@@ -1,8 +1,18 @@
+VENV = $(abspath ../.venv)
+PYTHON = $(VENV)/bin/python
 RAW = ../data/raw
 IMDB_SPOILER = $(RAW)/imdb_spoiler
 ROTTEN_TOMATOES = $(RAW)/rotten_tomatoes
+INSPECTION = ../data/inspection
+PROCESSED = ../data/processed
 
-all: collect
+all: requirements collect inspect cleaning
+
+requirements: $(PYTHON)
+	$(PYTHON) -m pip install -r ../requirements.txt
+
+$(PYTHON):
+	python3 -m venv $(VENV)
 
 collect: imdb_spoiler rotten_tomatoes
 
@@ -22,4 +32,12 @@ $(ROTTEN_TOMATOES)/rotten_tomatoes_critic_reviews.csv:
 	unzip -o $(ROTTEN_TOMATOES)/rotten_tomatoes.zip -d $(ROTTEN_TOMATOES)
 	rm $(ROTTEN_TOMATOES)/rotten_tomatoes.zip
 
-.PHONY: all collect imdb_spoiler rotten_tomatoes
+inspect: requirements collect
+	mkdir -p $(INSPECTION)
+	$(PYTHON) data_inspect.py
+
+cleaning: requirements collect
+	mkdir -p $(PROCESSED)
+	$(PYTHON) data_clean.py
+
+.PHONY: all requirements collect imdb_spoiler rotten_tomatoes inspect cleaning
