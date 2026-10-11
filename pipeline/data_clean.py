@@ -1,30 +1,34 @@
 import pandas as pd
+from utils import write_jsonl
 
-RAW = "../data/raw"
+LINKED = "../data/linked"
 PROCESSED = "../data/processed"
 
-
-def log(step, data):
-    print(f"  {step}: {len(data)} rows")
+STATS = []
 
 
-def write_jsonl(data, path):
-    with open(path, "w", encoding="utf-8") as file:
-        for start in range(0, len(data), 100_000):
-            data.iloc[start:start + 100_000].to_json(file, orient="records", lines=True, force_ascii=False)
+def log(dataset, step, data):
+    STATS.append({"dataset": dataset, "step": step, "rows": len(data)})
 
 
 def clean_rt_reviews():
-    reviews = pd.read_csv(f"{RAW}/rotten_tomatoes/rotten_tomatoes_movie_reviews.csv", dtype=str, keep_default_na=False)
-    # print("rt_reviews")
-    # log("raw", reviews)
+    reviews = pd.read_json(f"{LINKED}/rt_reviews.jsonl", lines=True, dtype=False, convert_dates=False)
+    log("rt_reviews", "linked", reviews)
     reviews["reviewText"] = reviews["reviewText"].str.strip()
     reviews = reviews.drop_duplicates()
-    # log("without exact duplicates", reviews)
+    log("rt_reviews", "without exact duplicates", reviews)
     reviews = reviews[reviews["reviewText"] != ""]
-    # log("without empty reviews", reviews)
+    log("rt_reviews", "without empty reviews", reviews)
     write_jsonl(reviews, f"{PROCESSED}/rt_reviews.jsonl")
+
+
+def clean_imdb_movies():
+    movies = pd.read_json(f"{LINKED}/imdb_movies.jsonl", lines=True, dtype=False, convert_dates=False)
+    movies = movies.drop(columns="plot_synopsis")
+    write_jsonl(movies, f"{PROCESSED}/imdb_movies.jsonl")
 
 
 if __name__ == "__main__":
     clean_rt_reviews()
+    clean_imdb_movies()
+    pd.DataFrame(STATS).to_csv(f"{PROCESSED}/cleaning_stats.csv", index=False)

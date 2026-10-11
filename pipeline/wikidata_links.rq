@@ -1,0 +1,7 @@
+SELECT ?film ?imdb_id ?rt_id WHERE {
+  ?film wdt:P345 ?imdb_id ;
+        p:P1258 ?statement .
+  ?statement ps:P1258 ?rt_id .
+  FILTER(STRSTARTS(?imdb_id, "tt"))
+  FILTER(STRSTARTS(?rt_id, "m/"))
+}
