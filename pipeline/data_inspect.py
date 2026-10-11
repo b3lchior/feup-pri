@@ -7,7 +7,7 @@ INSPECTION = "../data/inspection"
 FILES = {
     "imdb_reviews": "imdb_spoiler/IMDB_reviews.json",
     "imdb_movies": "imdb_spoiler/IMDB_movie_details.json",
-    "rt_reviews": "rotten_tomatoes/rotten_tomatoes_critic_reviews.csv",
+    "rt_reviews": "rotten_tomatoes/rotten_tomatoes_movie_reviews.csv",
     "rt_movies": "rotten_tomatoes/rotten_tomatoes_movies.csv",
 }
 
