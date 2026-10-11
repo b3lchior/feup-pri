@@ -384,6 +384,17 @@ def search_title(client: Client, query: str):
     return hits[0] if hits else None
 
 
+def resolve_and_fetch_film(client: Client, query: str, use_cache: bool = True):
+    """Fetch an exact page title first; use Wikipedia search only when it is missing."""
+    record = fetch_film(client, query, use_cache=use_cache)
+    if record is not None and not record["is_disambiguation"]:
+        return record
+    title = search_title(client, query)
+    if not title or title == query:
+        return record
+    return fetch_film(client, title, use_cache=use_cache)
+
+
 def category_members(client: Client, category: str, limit: int = 0) -> list:
     """Article titles inside a Wikipedia category (no sub-categories)."""
     if not category.lower().startswith("category:"):
@@ -490,6 +501,9 @@ def main():
     ap.add_argument("--delay", type=float, default=0.3, help="seconds between requests")
     ap.add_argument("--refresh", action="store_true", help="ignore cache")
     ap.add_argument("--out", default="films.jsonl", help="JSONL output file")
+    ap.add_argument("--progress", help="checkpoint file (defaults to <out>.progress.jsonl)")
+    ap.add_argument("--overwrite", action="store_true",
+                     help="start a fresh output and checkpoint instead of resuming")
     ap.add_argument("--db", help="also save everything into this SQLite database, e.g. films.db")
     ap.add_argument("--no-jsonl", action="store_true", help="do not write the JSONL file")
     args = ap.parse_args()
@@ -505,34 +519,93 @@ def main():
     if not titles:
         sys.exit("Nothing to do. Pass titles, --titles-file or --category (see --help).")
 
+    output_path = Path(args.out)
+    progress_path = Path(args.progress) if args.progress else Path(args.out + ".progress.jsonl")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    progress_path.parent.mkdir(parents=True, exist_ok=True)
+    if args.overwrite:
+        output_path.write_text("", encoding="utf-8")
+        progress_path.write_text("", encoding="utf-8")
+
+    # A progress row records the input query and its outcome. Successful and
+    # permanent misses are skipped on resume; transient request errors are not.
+    completed_queries = set()
+    if progress_path.exists():
+        with progress_path.open(encoding="utf-8") as progress_file:
+            for line in progress_file:
+                try:
+                    row = json.loads(line)
+                    if row.get("status") in {"saved", "not_found", "disambiguation"}:
+                        completed_queries.add(row["query"])
+                except (json.JSONDecodeError, KeyError):
+                    continue
+
+    existing_records = {}
+    if not args.no_jsonl and output_path.exists():
+        with output_path.open(encoding="utf-8") as existing_file:
+            for line in existing_file:
+                try:
+                    record = json.loads(line)
+                    if record.get("pageid") is not None:
+                        existing_records[record["pageid"]] = record
+                        # Supports resuming outputs created before checkpoints
+                        # existed, where the original query was not recorded.
+                        completed_queries.add(record.get("title", ""))
+                except json.JSONDecodeError:
+                    continue
+
     done, failed = 0, []
-    out = None if args.no_jsonl else open(args.out, "w", encoding="utf-8")
+    out = None if args.no_jsonl else output_path.open("a", encoding="utf-8")
+    progress = progress_path.open("a", encoding="utf-8")
     conn = open_db(args.db) if args.db else None
     try:
         for i, t in enumerate(titles, 1):
+            if t in completed_queries:
+                continue
             try:
-                title = search_title(client, t) if args.search else t
-                record = fetch_film(client, title, use_cache=not args.refresh) if title else None
+                if args.search:
+                    record = resolve_and_fetch_film(client, t, use_cache=not args.refresh)
+                else:
+                    record = fetch_film(client, t, use_cache=not args.refresh)
             except requests.RequestException as exc:
                 failed.append((t, repr(exc)))
+                progress.write(json.dumps({"query": t, "status": "request_error",
+                                           "error": repr(exc)}, ensure_ascii=False) + "\n")
+                progress.flush()
                 continue
-            if record is None or record["is_disambiguation"]:
-                failed.append((t, "not found" if record is None else "disambiguation page"))
+            if record is None:
+                failed.append((t, "not found"))
+                progress.write(json.dumps({"query": t, "status": "not_found"}, ensure_ascii=False) + "\n")
+                progress.flush()
                 continue
-            if out:
+            if record["is_disambiguation"]:
+                failed.append((t, "disambiguation page"))
+                progress.write(json.dumps({"query": t, "status": "disambiguation",
+                                           "title": record["title"]}, ensure_ascii=False) + "\n")
+                progress.flush()
+                continue
+            if out and record["pageid"] not in existing_records:
                 out.write(json.dumps(record, ensure_ascii=False) + "\n")
+                out.flush()
+            existing_records[record["pageid"]] = record
             if conn:
                 save_to_db(conn, record)
                 conn.commit()
+            progress.write(json.dumps({"query": t, "status": "saved",
+                                       "title": record["title"], "pageid": record["pageid"]},
+                                      ensure_ascii=False) + "\n")
+            progress.flush()
+            completed_queries.add(t)
             done += 1
             print(f"[{i}/{len(titles)}] {record['title']} ({record['year']}) - "
                   f"plot {record['plot_word_count']} words, {len(record['categories'])} categories")
     finally:
         if out:
             out.close()
+        progress.close()
         if conn:
             conn.close()
-    where = ", ".join(x for x in ([None if args.no_jsonl else args.out] + [args.db]) if x)
+    where = ", ".join(x for x in ([None if args.no_jsonl else str(output_path)] + [args.db]) if x)
     print(f"\nSaved {done} films to {where}")
     for t, why in failed:
         print(f"  skipped: {t} ({why})")

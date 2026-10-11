@@ -1,3 +1,4 @@
 data/
 project_files/
 pipeline/wiki_cache/
+pipeline/__pycache__
