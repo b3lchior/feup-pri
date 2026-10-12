@@ -7,6 +7,7 @@ WIKIDATA = $(RAW)/wikidata
 INSPECTION = ../data/inspection
 LINKED = ../data/linked
 PROCESSED = ../data/processed
+SCRAPED = ../data/scraped
 
 all: requirements collect link cleaning
 
@@ -55,6 +56,10 @@ cleaning: link
 	mkdir -p $(PROCESSED)
 	$(PYTHON) data_clean.py
 
+scrape: cleaning
+	mkdir -p $(SCRAPED)
+	$(PYTHON) data_scrape.py
+
 .DELETE_ON_ERROR:
 
-.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link cleaning
+.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link cleaning scrape
