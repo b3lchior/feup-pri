@@ -2,7 +2,6 @@ import json
 import os
 import queue
 import random
-import re
 import sys
 import threading
 import time
@@ -14,6 +13,7 @@ from collections import Counter
 
 import pandas as pd
 import trafilatura
+from utils import contains_quote
 
 PROCESSED = "../data/processed"
 OUTPUT = "../data/scraped/full_reviews.jsonl"
@@ -62,17 +62,6 @@ def read_robots(scheme, host):
     else:
         parser.parse([])
     return parser
-
-
-def words(text):
-    return re.findall(r"\w+", text.lower())
-
-
-def contains_quote(article, quote):
-    quote_words = words(quote)
-    article_text = " " + " ".join(words(article)) + " "
-    size = min(6, len(quote_words))
-    return size > 0 and any(" " + " ".join(quote_words[i:i + size]) + " " in article_text for i in range(len(quote_words) - size + 1))
 
 
 def extract(body, url):

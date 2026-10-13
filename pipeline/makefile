@@ -8,11 +8,13 @@ INSPECTION = ../data/inspection
 LINKED = ../data/linked
 PROCESSED = ../data/processed
 SCRAPED = ../data/scraped
+SAMPLED = ../data/sampled
+DOCUMENTS = ../data/documents
 
-all: requirements collect link cleaning
+all: requirements collect link cleaning sample merge
 
 clean:
-	rm -rf $(RAW) $(INSPECTION) $(LINKED) $(PROCESSED)
+	rm -rf $(RAW) $(INSPECTION) $(LINKED) $(PROCESSED) $(SAMPLED) $(DOCUMENTS)
 
 requirements: $(PYTHON)
 	$(PYTHON) -m pip install -r ../requirements.txt
@@ -53,8 +55,17 @@ link: requirements collect
 	$(PYTHON) data_link.py
 
 cleaning: link
+	@test -f $(SCRAPED)/full_reviews.jsonl || echo "WARNING: $(SCRAPED)/full_reviews.jsonl not found, so critic reviews will only have their short quotes. See README.md."
 	mkdir -p $(PROCESSED)
 	$(PYTHON) data_clean.py
+
+sample: cleaning
+	mkdir -p $(SAMPLED)
+	$(PYTHON) data_sample.py
+
+merge: sample
+	mkdir -p $(DOCUMENTS)
+	$(PYTHON) data_merge.py
 
 scrape: cleaning
 	mkdir -p $(SCRAPED)
@@ -62,4 +73,4 @@ scrape: cleaning
 
 .DELETE_ON_ERROR:
 
-.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link cleaning scrape
+.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link cleaning sample merge scrape
