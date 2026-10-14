@@ -1,7 +1,12 @@
-SELECT ?film ?imdb_id ?rt_id WHERE {
+SELECT DISTINCT ?film ?imdb_id ?rt_id ?wikipedia_title WHERE {
   ?film wdt:P345 ?imdb_id ;
         p:P1258 ?statement .
   ?statement ps:P1258 ?rt_id .
   FILTER(STRSTARTS(?imdb_id, "tt"))
   FILTER(STRSTARTS(?rt_id, "m/"))
+  OPTIONAL {
+    ?article schema:about ?film ;
+             schema:isPartOf <https://en.wikipedia.org/> ;
+             schema:name ?wikipedia_title .
+  }
 }
