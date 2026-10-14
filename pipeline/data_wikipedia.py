@@ -2,6 +2,7 @@
 
 import json
 import time
+import urllib.error
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
@@ -11,13 +12,15 @@ LINKED = "../data/linked/film_links.jsonl"
 OUTPUT = "../data/raw/wikipedia/film_articles.jsonl"
 API = "https://en.wikipedia.org/w/api.php"
 USER_AGENT = "PRevIews/0.1 (https://github.com/b3lchior/feup-pri)"
-BATCH_SIZE = 20
+BATCH_SIZE = 1
+RETRIES = 4
 
 
 def fetch_batch(titles):
     params = {
         "action": "query",
         "prop": "extracts|info",
+        "exlimit": len(titles),
         "explaintext": 1,
         "inprop": "url",
         "redirects": 1,
@@ -29,8 +32,15 @@ def fetch_batch(titles):
         f"{API}?{urlencode(params)}",
         headers={"User-Agent": USER_AGENT, "Accept": "application/json"},
     )
-    with urlopen(request, timeout=60) as response:
-        result = json.load(response)
+    for attempt in range(RETRIES):
+        try:
+            with urlopen(request, timeout=60) as response:
+                result = json.load(response)
+            break
+        except (urllib.error.HTTPError, urllib.error.URLError):
+            if attempt == RETRIES - 1:
+                raise
+            time.sleep(2**attempt)
 
     pages = result.get("query", {}).get("pages", [])
     aliases = {}
