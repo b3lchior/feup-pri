@@ -17,7 +17,7 @@ def link_films(movies, rt_movies):
     links["wikidata_id"] = links["film"].str.removeprefix("http://www.wikidata.org/entity/")
     links["rt_id"] = links["rt_id"].str.removeprefix("m/")
     links = links[links["imdb_id"].isin(movies["movie_id"]) & links["rt_id"].isin(rt_movies["id"])]
-    links = links[["imdb_id", "wikidata_id", "rt_id"]].drop_duplicates(subset=["imdb_id", "rt_id"])
+    links = links[["imdb_id", "wikidata_id", "rt_id", "wikipedia_title"]].drop_duplicates(subset=["imdb_id", "rt_id"])
     write_jsonl(links, f"{LINKED}/film_links.jsonl")
     return links
 

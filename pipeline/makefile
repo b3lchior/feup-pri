@@ -11,7 +11,7 @@ SCRAPED = ../data/scraped
 SAMPLED = ../data/sampled
 DOCUMENTS = ../data/documents
 
-all: requirements collect link cleaning sample merge
+all: requirements collect link wikipedia cleaning sample merge
 
 clean:
 	rm -rf $(RAW) $(INSPECTION) $(LINKED) $(PROCESSED) $(SAMPLED) $(DOCUMENTS)
@@ -54,6 +54,10 @@ link: requirements collect
 	mkdir -p $(LINKED)
 	$(PYTHON) data_link.py
 
+wikipedia: requirements link
+	mkdir -p $(RAW)/wikipedia
+	$(PYTHON) data_wikipedia.py
+
 cleaning: link
 	@test -f $(SCRAPED)/full_reviews.jsonl || echo "WARNING: $(SCRAPED)/full_reviews.jsonl not found, so critic reviews will only have their short quotes. See README.md."
 	mkdir -p $(PROCESSED)
@@ -63,7 +67,7 @@ sample: cleaning
 	mkdir -p $(SAMPLED)
 	$(PYTHON) data_sample.py
 
-merge: sample
+merge: sample wikipedia
 	mkdir -p $(DOCUMENTS)
 	$(PYTHON) data_merge.py
 
@@ -73,4 +77,4 @@ scrape: cleaning
 
 .DELETE_ON_ERROR:
 
-.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link cleaning sample merge scrape
+.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link wikipedia cleaning sample merge scrape

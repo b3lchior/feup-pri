@@ -8,7 +8,8 @@ DOCUMENTS = "../data/documents"
 
 IMDB_FILM_COLUMNS = {"movie_id": "imdb_id", "release_date": "release_date", "genre": "genres", "plot_summary": "plot_summary", "duration": "duration_minutes", "rating": "imdb_rating"}
 RT_FILM_COLUMNS = {"imdb_id": "imdb_id", "rt_id": "rt_id", "title": "title", "tomatoMeter": "tomatometer", "audienceScore": "audience_score", "rating": "content_rating", "originalLanguage": "original_language", "director": "directors", "writer": "writers", "boxOffice": "box_office", "distributor": "distributor"}
-FILM_FIELDS = ["imdb_id", "wikidata_id", "title", "year", "genres", "plot_summary", "imdb_rating", "tomatometer", "audience_score"]
+FILM_FIELDS = ["imdb_id", "wikidata_id", "title", "year", "genres", "plot_summary", "imdb_rating", "tomatometer", "audience_score", "wikipedia_title", "wikipedia_url", "wikipedia_page_id", "wikipedia_revision_id", "wikipedia_extract"]
+REVIEW_FILM_FIELDS = [field for field in FILM_FIELDS if field != "wikipedia_extract"]
 
 
 def read_table(path):
@@ -27,12 +28,14 @@ def build_films(sampled_films):
     rt = rt.drop_duplicates("imdb_id")[list(RT_FILM_COLUMNS)].rename(columns=RT_FILM_COLUMNS)
     links = read_table(f"{LINKED}/film_links.jsonl").drop_duplicates("imdb_id")[["imdb_id", "wikidata_id"]]
     films = imdb[imdb["imdb_id"].isin(sampled_films)].merge(links, on="imdb_id").merge(rt, on="imdb_id")
+    wikipedia = read_table("../data/raw/wikipedia/film_articles.jsonl").drop_duplicates("imdb_id")
+    films = films.merge(wikipedia[["imdb_id", "wikipedia_title", "wikipedia_url", "wikipedia_page_id", "wikipedia_revision_id", "wikipedia_extract"]], on="imdb_id", how="left")
     films["year"] = films["release_date"].str[:4].astype(int)
     for column in ["tomatometer", "audience_score", "box_office"]:
         films[column] = films[column].astype("Int64")
     log("films", "documents", len(films))
     write_jsonl(films, f"{DOCUMENTS}/films.jsonl")
-    return films[FILM_FIELDS].add_prefix("film_")
+    return films[REVIEW_FILM_FIELDS].add_prefix("film_")
 
 
 def critic_documents(chunk):

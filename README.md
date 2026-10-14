@@ -53,7 +53,7 @@ The first run downloads about 500 MB from Kaggle and Wikidata. After that, a ful
 | File | Contents |
 |---|---|
 | `reviews.jsonl` | 439,946 review documents, one per line: 179,779 critic and 260,167 audience reviews about 1,498 films |
-| `films.jsonl` | one document per film |
+| `films.jsonl` | one document per film, including its English Wikipedia article extract when available |
 | `merge_stats.csv` | document counts |
 
 Each review document has its text (`text`, plus `text_kind`: `full` or `quote`), its perspective (`critic` or `audience`), its score on a 0–1 scale, author, date and other details, and a copy of its film's details (`film_title`, `film_year`, `film_genres`, `film_plot_summary`, `film_tomatometer`…).
@@ -66,8 +66,9 @@ All commands run from the `pipeline/` folder.
 |---|---|---|
 | `make` | Runs every stage below, in order | |
 | `make requirements` | Creates `.venv/` and installs `requirements.txt` | `.venv/` |
-| `make collect` | Downloads IMDb Spoiler (Kaggle, version 1), Rotten Tomatoes/Clapper (Kaggle, version 4) and the IMDb ↔ Rotten Tomatoes links from Wikidata | `data/raw/` |
+| `make collect` | Downloads IMDb Spoiler (Kaggle, version 1), Rotten Tomatoes/Clapper (Kaggle, version 4) and IMDb ↔ Rotten Tomatoes links plus English Wikipedia titles from Wikidata | `data/raw/` |
 | `make link` | Matches IMDb and Rotten Tomatoes films through Wikidata and keeps only our films | `data/linked/` |
+| `make wikipedia` | Fetches English Wikipedia plain-text extracts for linked films through the MediaWiki API | `data/raw/wikipedia/film_articles.jsonl` |
 | `make cleaning` | Removes duplicates and placeholders, fixes dates, scores and formats, attaches the scraped full texts | `data/processed/`, with `cleaning_stats.csv` |
 | `make sample` | Keeps the films with both critic and audience reviews, at most 200 reviews per film from each source | `data/sampled/`, with `sample_stats.csv` |
 | `make merge` | Builds the final documents | `data/documents/` |
@@ -84,7 +85,8 @@ feup-pri/
 ├── requirements.txt          Python packages, with pinned versions
 └── pipeline/
     ├── makefile              the pipeline stages
-    ├── wikidata_links.rq     Wikidata query for the IMDb ↔ Rotten Tomatoes links
+    ├── wikidata_links.rq     Wikidata query for IMDb, Rotten Tomatoes and English Wikipedia links
+    ├── data_wikipedia.py     fetches linked Wikipedia article extracts
     ├── data_inspect.py       make inspect
     ├── data_link.py          make link
     ├── data_clean.py         make cleaning
@@ -103,6 +105,9 @@ The `data/` folder is created by the pipeline and is not part of the repository.
 | [IMDb Spoiler Dataset](https://www.kaggle.com/datasets/rmisra/imdb-spoiler-dataset) (Rishabh Misra) | Kaggle version 1 | CC BY 4.0 |
 | [Massive Rotten Tomatoes Movies & Reviews](https://www.kaggle.com/datasets/andrezaza/clapper-massive-rotten-tomatoes-movies-and-reviews) (andrezaza) | Kaggle version 4 | CC0 |
 | [Wikidata](https://query.wikidata.org), IMDb ID (P345) and Rotten Tomatoes ID (P1258) | queried live at download time | CC0 |
+| [English Wikipedia](https://en.wikipedia.org), article extracts matched through Wikidata sitelinks | fetched live through the MediaWiki API | CC BY-SA; retain the article URL and revision ID for attribution |
+
+Wikipedia text is stored once per film in `films.jsonl` as `wikipedia_extract`, alongside `wikipedia_url` and `wikipedia_revision_id` for attribution. It is not copied into every review document. The pipeline requests English Wikipedia only; films without an English article have empty Wikipedia fields. Wikipedia text is available under CC BY-SA, so preserve attribution if the data or extracts are redistributed.
 | Full critic reviews, scraped from the critics' websites | collected 2026-10-11/12 | copyrighted by their authors |
 
 Wikidata changes over time, so a fresh download can link a slightly different set of films than ours. Our copy was downloaded on 2026-10-11.
