@@ -65,6 +65,7 @@ def clean_rt_reviews():
     log("rt_reviews", "without placeholder texts", len(reviews))
     reviews["translated"] = reviews["reviewText"].str.contains(TRANSLATED, case=False)
     reviews["reviewText"] = reviews["reviewText"].str.replace(TRANSLATED, "", case=False, regex=True)
+    reviews = reviews[reviews["reviewText"] != ""]
     fake_date = (reviews["creationDate"] == "2000-01-01") | (reviews["creationDate"] < "1900")
     reviews.loc[fake_date, "creationDate"] = ""
     log("rt_reviews", "fake dates set to unknown", int(fake_date.sum()))
