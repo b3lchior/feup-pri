@@ -68,7 +68,7 @@ merge: sample
 	mkdir -p $(DOCUMENTS)
 	$(PYTHON) data_merge.py
 
-scrape: cleaning
+scrape: link
 	mkdir -p $(SCRAPED)
 	$(PYTHON) data_scrape.py
 

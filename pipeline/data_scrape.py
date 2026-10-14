@@ -15,7 +15,7 @@ import pandas as pd
 import trafilatura
 from utils import contains_quote
 
-PROCESSED = "../data/processed"
+LINKED = "../data/linked"
 OUTPUT = "../data/scraped/full_reviews.jsonl"
 USER_AGENT = "PRrevIews-research-crawler/0.1 (FEUP university student project; respects robots.txt)"
 WORKERS = 32
@@ -150,7 +150,7 @@ def report(done, total, sites_done, sites_total, start):
 
 if __name__ == "__main__":
     limit = int(sys.argv[1]) if len(sys.argv) > 1 else None
-    reviews = pd.read_json(f"{PROCESSED}/rt_reviews.jsonl", lines=True, dtype=False, convert_dates=False)
+    reviews = pd.read_json(f"{LINKED}/rt_reviews.jsonl", lines=True, dtype=False, convert_dates=False)
     reviews = reviews[reviews["reviewUrl"].str.startswith("http")]
     reviews = reviews[~reviews["reviewId"].isin(finished_reviews())]
     pages = [(url, list(zip(group["reviewId"], group["reviewText"]))) for url, group in reviews.groupby("reviewUrl")]
