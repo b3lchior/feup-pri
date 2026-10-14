@@ -16,7 +16,8 @@ def link_films(movies, rt_movies):
     links = pd.read_csv(f"{RAW}/wikidata/links.csv", dtype=str, keep_default_na=False)
     links["wikidata_id"] = links["film"].str.removeprefix("http://www.wikidata.org/entity/")
     links["rt_id"] = links["rt_id"].str.removeprefix("m/")
-    links = links[links["imdb_id"].isin(movies["movie_id"]) & links["rt_id"].isin(rt_movies["id"])]
+    titled = rt_movies.loc[rt_movies["title"].str.strip() != "", "id"]
+    links = links[links["imdb_id"].isin(movies["movie_id"]) & links["rt_id"].isin(titled)]
     links = links[["imdb_id", "wikidata_id", "rt_id"]].drop_duplicates(subset=["imdb_id", "rt_id"])
     write_jsonl(links, f"{LINKED}/film_links.jsonl")
     return links

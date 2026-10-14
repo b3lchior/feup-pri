@@ -1,3 +1,4 @@
 data/
 project_files/
 .venv/
+**/__pycache__/

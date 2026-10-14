@@ -45,6 +45,7 @@ wikidata: $(WIKIDATA)/links.csv
 $(WIKIDATA)/links.csv: wikidata_links.rq
 	mkdir -p $(WIKIDATA)
 	curl -fL -G https://query.wikidata.org/sparql -H "Accept: text/csv" -H "User-Agent: PRrevIews/0.1 (FEUP PRI student project)" --data-urlencode query@wikidata_links.rq -o $(WIKIDATA)/links.csv
+	@if grep -q "Exception" $(WIKIDATA)/links.csv; then echo "Wikidata stopped the query halfway. Run make again."; exit 1; fi
 
 inspect: requirements collect
 	mkdir -p $(INSPECTION)

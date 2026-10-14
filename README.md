@@ -105,7 +105,7 @@ The `data/` folder is created by the pipeline and is not part of the repository.
 | [Wikidata](https://query.wikidata.org), IMDb ID (P345) and Rotten Tomatoes ID (P1258) | queried live at download time | CC0 |
 | Full critic reviews, scraped from the critics' websites | collected 2026-10-11/12 | copyrighted by their authors |
 
-Wikidata changes over time, so a fresh download can link a slightly different set of films than ours. Our copy was downloaded on 2026-10-11.
+Wikidata changes over time, so a fresh download can link a slightly different set of films than ours. Our copy was downloaded on 2026-10-13.
 
 ## About the scraped reviews
 
