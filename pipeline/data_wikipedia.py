@@ -11,7 +11,7 @@ import pandas as pd
 LINKED = "../data/linked/film_links.jsonl"
 OUTPUT = "../data/raw/wikipedia/film_articles.jsonl"
 API = "https://en.wikipedia.org/w/api.php"
-USER_AGENT = "PRevIews/0.1 (https://github.com/b3lchior/feup-pri)"
+USER_AGENT = "PRrevIews/0.1 (https://github.com/b3lchior/feup-pri)"
 BATCH_SIZE = 1
 RETRIES = 4
 

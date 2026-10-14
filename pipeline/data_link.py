@@ -18,7 +18,9 @@ def link_films(movies, rt_movies):
     links["rt_id"] = links["rt_id"].str.removeprefix("m/")
     titled = rt_movies.loc[rt_movies["title"].str.strip() != "", "id"]
     links = links[links["imdb_id"].isin(movies["movie_id"]) & links["rt_id"].isin(titled)]
-    links = links[["imdb_id", "wikidata_id", "rt_id"]].drop_duplicates(subset=["imdb_id", "rt_id"]).sort_values(["imdb_id", "rt_id"])
+    titles = pd.read_csv(f"{RAW}/wikidata/wikipedia_titles.csv", dtype=str, keep_default_na=False)
+    links = links.merge(titles, on="wikidata_id", how="left")
+    links = links[["imdb_id", "wikidata_id", "rt_id", "wikipedia_title"]].drop_duplicates(subset=["imdb_id", "rt_id"]).sort_values(["imdb_id", "rt_id"])
     write_jsonl(links, f"{LINKED}/film_links.jsonl")
     return links
 

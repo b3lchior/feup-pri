@@ -4,6 +4,7 @@ RAW = ../data/raw
 IMDB_SPOILER = $(RAW)/imdb_spoiler
 ROTTEN_TOMATOES = $(RAW)/rotten_tomatoes
 WIKIDATA = $(RAW)/wikidata
+WIKIPEDIA = $(RAW)/wikipedia
 INSPECTION = ../data/inspection
 LINKED = ../data/linked
 PROCESSED = ../data/processed
@@ -40,12 +41,15 @@ $(ROTTEN_TOMATOES)/rotten_tomatoes_movie_reviews.csv:
 	unzip -o $(ROTTEN_TOMATOES)/rotten_tomatoes.zip -d $(ROTTEN_TOMATOES)
 	rm $(ROTTEN_TOMATOES)/rotten_tomatoes.zip
 
-wikidata: $(WIKIDATA)/links.csv
+wikidata: $(WIKIDATA)/links.csv $(WIKIDATA)/wikipedia_titles.csv
 
 $(WIKIDATA)/links.csv: wikidata_links.rq
 	mkdir -p $(WIKIDATA)
 	curl -fL -G https://query.wikidata.org/sparql -H "Accept: text/csv" -H "User-Agent: PRrevIews/0.1 (FEUP PRI student project)" --data-urlencode query@wikidata_links.rq -o $(WIKIDATA)/links.csv
-	@if grep -q "Exception" $(WIKIDATA)/links.csv; then echo "Wikidata stopped the query halfway. Run make again."; exit 1; fi
+	@if grep -q "java.util.concurrent" $(WIKIDATA)/links.csv; then echo "Wikidata stopped the query halfway. Run make again."; exit 1; fi
+
+$(WIKIDATA)/wikipedia_titles.csv: data_wikipedia_titles.py $(WIKIDATA)/links.csv $(IMDB_SPOILER)/IMDB_reviews.json | requirements
+	$(PYTHON) data_wikipedia_titles.py
 
 inspect: requirements collect
 	mkdir -p $(INSPECTION)
@@ -55,8 +59,10 @@ link: requirements collect
 	mkdir -p $(LINKED)
 	$(PYTHON) data_link.py
 
-wikipedia: requirements link
-	mkdir -p $(RAW)/wikipedia
+wikipedia: $(WIKIPEDIA)/film_articles.jsonl
+
+$(WIKIPEDIA)/film_articles.jsonl: data_wikipedia.py $(WIKIDATA)/wikipedia_titles.csv | link
+	mkdir -p $(WIKIPEDIA)
 	$(PYTHON) data_wikipedia.py
 
 cleaning: link
