@@ -46,7 +46,7 @@ cd pipeline
 make
 ```
 
-The first run downloads about 500 MB from Kaggle, the links from Wikidata, and the English Wikipedia article of every film (about 1,500 requests, roughly 12 minutes). After that, `make` takes about 2 minutes and never downloads twice: a download is only repeated if its file is deleted or the query or script that produces it changes.
+The first run downloads about 500 MB from Kaggle, the links from Wikidata, and the English Wikipedia article of every film (about 1,500 requests, roughly 12 minutes). After that, `make` takes about 2 minutes, charts included, and never downloads twice: a download is only repeated if its file is deleted or the query or script that produces it changes.
 
 **4. Use the results** in `data/documents/`:
 
@@ -72,6 +72,7 @@ All commands run from the `pipeline/` folder.
 | `make cleaning` | Removes duplicates and placeholders, fixes dates, scores and formats, attaches the scraped full texts | `data/processed/`, with `cleaning_stats.csv` |
 | `make sample` | Keeps the films with both critic and audience reviews, at most 200 reviews per film from each source | `data/sampled/`, with `sample_stats.csv` |
 | `make merge` | Builds the final documents | `data/documents/` |
+| `make analysis` | Exploratory analysis of the final documents: charts (PNG and PDF) and their figures | `data/analysis/`, with `analysis_stats.csv` and `distinctive_words.csv` |
 | `make inspect` | Optional: data-quality report for each raw Kaggle file (needs about 4.5 GB of memory) | `data/inspection/` |
 | `make clean` | Deletes everything the pipeline generated, except `data/scraped/` | |
 
@@ -93,30 +94,7 @@ feup-pri/
     ├── data_clean.py              make cleaning
     ├── data_sample.py             make sample
     ├── data_merge.py              make merge
+    ├── data_analysis.py           make analysis
     ├── data_scrape.py             the scraper that produced full_reviews.jsonl (not run by make)
     └── utils.py                   shared helpers
 ```
-
-The `data/` folder is created by the pipeline and is not part of the repository.
-
-## Data sources
-
-| Source | Version | License |
-|---|---|---|
-| [IMDb Spoiler Dataset](https://www.kaggle.com/datasets/rmisra/imdb-spoiler-dataset) (Rishabh Misra) | Kaggle version 1 | CC BY 4.0 |
-| [Massive Rotten Tomatoes Movies & Reviews](https://www.kaggle.com/datasets/andrezaza/clapper-massive-rotten-tomatoes-movies-and-reviews) (andrezaza) | Kaggle version 4 | CC0 |
-| [Wikidata](https://www.wikidata.org): IMDb ID (P345), Rotten Tomatoes ID (P1258) and English Wikipedia article titles | queried live at download time | CC0 |
-| [English Wikipedia](https://en.wikipedia.org): full article text, through the MediaWiki API | downloaded live, with the revision ID of each article | CC BY-SA 4.0 |
-| Full critic reviews, scraped from the critics' websites | collected 2026-10-11/12 | copyrighted by their authors |
-
-Wikidata and Wikipedia change over time, so a fresh download can link a slightly different set of films, or get newer versions of the articles. Our copies were downloaded on 2026-10-14.
-
-Each film's Wikipedia text is stored once, in `films.jsonl` (`wikipedia_extract`), with its `wikipedia_title`, `wikipedia_url`, `wikipedia_page_id` and `wikipedia_revision_id`. The revision ID identifies the exact version used (`https://en.wikipedia.org/w/index.php?oldid=<revision ID>`). Wikipedia text is licensed CC BY-SA 4.0, so keep the article links for attribution if the data is shared. The full articles include each film's plot (with its ending) and its critical reception.
-
-## About the scraped reviews
-
-`data_scrape.py` fetched each critic review's link (`reviewUrl`). It obeyed each site's `robots.txt` and `Crawl-delay`, waited at least 2 seconds between requests to the same site, and never got around paywalls. A page was kept only if it contained the Rotten Tomatoes quote. 56,838 full critic reviews were recovered; 56,785 of them remain after cleaning.
-
-These texts are copyrighted articles, used only for research inside this project. **Do not commit them to git or share the Drive file publicly.**
-
-The scraper is kept for documentation and is not part of `make`. Running it again sends about 170,000 requests to about 2,800 websites and takes about 10 hours.

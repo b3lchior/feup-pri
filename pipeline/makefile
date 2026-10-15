@@ -11,11 +11,12 @@ PROCESSED = ../data/processed
 SCRAPED = ../data/scraped
 SAMPLED = ../data/sampled
 DOCUMENTS = ../data/documents
+ANALYSIS = ../data/analysis
 
-all: requirements collect link wikipedia cleaning sample merge
+all: requirements collect link wikipedia cleaning sample merge analysis
 
 clean:
-	rm -rf $(RAW) $(INSPECTION) $(LINKED) $(PROCESSED) $(SAMPLED) $(DOCUMENTS)
+	rm -rf $(RAW) $(INSPECTION) $(LINKED) $(PROCESSED) $(SAMPLED) $(DOCUMENTS) $(ANALYSIS)
 
 requirements: $(PYTHON)
 	$(PYTHON) -m pip install -r ../requirements.txt
@@ -78,10 +79,14 @@ merge: sample wikipedia
 	mkdir -p $(DOCUMENTS)
 	$(PYTHON) data_merge.py
 
+analysis: merge
+	mkdir -p $(ANALYSIS)
+	$(PYTHON) data_analysis.py
+
 scrape: link
 	mkdir -p $(SCRAPED)
 	$(PYTHON) data_scrape.py
 
 .DELETE_ON_ERROR:
 
-.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link wikipedia cleaning sample merge scrape
+.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link wikipedia cleaning sample merge analysis scrape
