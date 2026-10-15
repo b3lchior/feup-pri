@@ -98,17 +98,14 @@ if lengths:
 
 
 # Audience vs critic score gap per film
-sc = rev.dropna(subset=["score"])
-cnt = sc.groupby(["film_imdb_id", "perspective"]).size().unstack(fill_value=0)
-ok = cnt[(cnt.get("audience", 0) >= MIN_SCORED) & (cnt.get("critic", 0) >= MIN_SCORED)].index
-mean = sc[sc["film_imdb_id"].isin(ok)].groupby(["film_imdb_id", "perspective"])["score"].mean().unstack()
-gap = mean["audience"] - mean["critic"]
+m = films.dropna(subset=["tomatometer", "audience_score"]).copy()
+m["gap"] = m["audience_score"] - m["tomatometer"]
 
-fig, ax = plt.subplots(figsize=(6.5, 3.8))
-ax.hist(gap, bins=40)
+fig, ax = plt.subplots(figsize=(6.5, 3.5))
+ax.hist(m["gap"], bins=40)
 ax.axvline(0, color="black", linewidth=1)
-ax.axvline(gap.mean(), color="red", linestyle="--", label=f"mean = {gap.mean():+.2f}")
-ax.set_title(f"Audience score - critic score per film (n={len(gap)} films, ≥{MIN_SCORED} scored reviews each side)",
-             fontsize=9)
-ax.set_xlabel("score gap (audience - critic)"); ax.set_ylabel("films"); ax.legend()
+ax.axvline(m["gap"].mean(), color="red", linestyle="--", label=f"mean = {m['gap'].mean():+.1f}")
+ax.axvline(25, color="gray", linestyle=":", label=f"{(m['gap'] >= 25).sum()} films ≥ +25")
+ax.set_xlabel("audience score − Tomatometer (points)"); ax.set_ylabel("films"); ax.legend()
+ax.set_title(f"Audience score − Tomatometer (n={len(m)} films)")
 savefig("gap")
