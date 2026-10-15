@@ -14,6 +14,7 @@ SCRAPED = "../data/scraped/full_reviews.jsonl"
 
 PLACEHOLDER = r"(full review|click|see (the )?full|for (the )?full|read (the )?(full|complete|my|our|more)|review in|podcast review|parental content review|\(?no quote available)"
 TRANSLATED = r"\s*\[full review in [^\]]*\]\s*$"
+CREDIT = r"\s{2,}Written by\n[^\n]*$"
 GRADES = ["F", "D-", "D", "D+", "C-", "C", "C+", "B-", "B", "B+", "A-", "A", "A+"]
 MONEY = {"": 1, "K": 1_000, "M": 1_000_000, "B": 1_000_000_000}
 LAYOUT = r"(?:\|[ \t-]*){2,}"
@@ -136,6 +137,9 @@ def clean_imdb_movies():
     movies = pd.read_json(f"{LINKED}/imdb_movies.jsonl", lines=True, dtype=False, convert_dates=False)
     movies = movies.drop(columns="plot_synopsis")
     movies["plot_summary"] = decode_html(movies["plot_summary"])
+    credited = movies["plot_summary"].str.contains(CREDIT)
+    movies["plot_summary"] = movies["plot_summary"].str.replace(CREDIT, "", regex=True)
+    log("imdb_movies", "author credits removed from plot summaries", int(credited.sum()))
     movies["duration"] = movies["duration"].map(minutes)
     movies["rating"] = movies["rating"].astype(float)
     write_jsonl(movies, f"{PROCESSED}/imdb_movies.jsonl")
