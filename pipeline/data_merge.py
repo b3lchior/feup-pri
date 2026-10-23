@@ -1,5 +1,5 @@
 import pandas as pd
-from utils import append_jsonl, log, read_chunks, read_columns, write_jsonl, write_stats
+from utils import append_jsonl, detect_language, log, read_chunks, read_columns, write_jsonl, write_stats
 
 RAW = "../data/raw"
 LINKED = "../data/linked"
@@ -50,7 +50,6 @@ def critic_documents(chunk):
         "original_score": empty_to_null(chunk["originalScore"]),
         "verdict": chunk["reviewState"],
         "top_critic": chunk["isTopCritic"],
-        "translated": chunk["translated"],
         "author": chunk["criticName"],
         "publication": chunk["publicatioName"],
         "date": empty_to_null(chunk["creationDate"]),
@@ -76,20 +75,23 @@ def audience_documents(chunk):
 
 
 def write_reviews(films):
-    counts = {"critic": 0, "audience": 0, "full": 0}
+    counts = {"critic": 0, "audience": 0, "full": 0, "other_language": 0}
     sources = [(f"{SAMPLED}/rt_reviews.jsonl", critic_documents), (f"{SAMPLED}/imdb_reviews.jsonl", audience_documents)]
     with open(f"{DOCUMENTS}/reviews.jsonl", "w", encoding="utf-8") as file:
         for path, to_documents in sources:
             for chunk in read_chunks(path):
                 documents = to_documents(chunk)
                 documents["word_count"] = documents["text"].str.split().str.len()
+                documents["language"] = documents["text"].map(detect_language)
                 documents = documents.merge(films, on="film_imdb_id", how="left")
                 counts[documents["perspective"].iloc[0]] += len(documents)
                 counts["full"] += int((documents["text_kind"] == "full").sum())
+                counts["other_language"] += int((documents["language"] != "en").sum())
                 append_jsonl(documents, file)
     log("reviews", "critic documents", counts["critic"])
     log("reviews", "audience documents", counts["audience"])
     log("reviews", "documents with a full review text", counts["full"])
+    log("reviews", "documents not in English", counts["other_language"])
 
 
 if __name__ == "__main__":

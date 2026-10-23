@@ -5,6 +5,7 @@ IMDB_SPOILER = $(RAW)/imdb_spoiler
 ROTTEN_TOMATOES = $(RAW)/rotten_tomatoes
 WIKIDATA = $(RAW)/wikidata
 WIKIPEDIA = $(RAW)/wikipedia
+SNAPSHOT = ../snapshot
 INSPECTION = ../data/inspection
 LINKED = ../data/linked
 PROCESSED = ../data/processed
@@ -44,13 +45,23 @@ $(ROTTEN_TOMATOES)/rotten_tomatoes_movie_reviews.csv:
 
 wikidata: $(WIKIDATA)/links.csv $(WIKIDATA)/wikipedia_titles.csv
 
-$(WIKIDATA)/links.csv: wikidata_links.rq
+$(WIKIDATA)/links.csv: $(SNAPSHOT)/links.csv
 	mkdir -p $(WIKIDATA)
-	curl -fL -G https://query.wikidata.org/sparql -H "Accept: text/csv" -H "User-Agent: PRrevIews/0.1 (FEUP PRI student project)" --data-urlencode query@wikidata_links.rq -o $(WIKIDATA)/links.csv
-	@if grep -q "java.util.concurrent" $(WIKIDATA)/links.csv; then echo "Wikidata stopped the query halfway. Run make again."; exit 1; fi
+	cp $(SNAPSHOT)/links.csv $(WIKIDATA)/links.csv
 
-$(WIKIDATA)/wikipedia_titles.csv: data_wikipedia_titles.py $(WIKIDATA)/links.csv $(IMDB_SPOILER)/IMDB_reviews.json | requirements
+$(WIKIDATA)/wikipedia_titles.csv: $(SNAPSHOT)/wikipedia_titles.csv
+	mkdir -p $(WIKIDATA)
+	cp $(SNAPSHOT)/wikipedia_titles.csv $(WIKIDATA)/wikipedia_titles.csv
+
+refresh: requirements imdb_spoiler rotten_tomatoes
+	rm -rf $(WIKIDATA) $(WIKIPEDIA)
+	mkdir -p $(WIKIDATA) $(WIKIPEDIA) $(LINKED) $(SNAPSHOT)
+	curl -fL -G https://query.wikidata.org/sparql -H "Accept: text/csv" -H "User-Agent: PRrevIews/0.1 (FEUP PRI student project)" --data-urlencode query@wikidata_links.rq -o $(WIKIDATA)/links.csv
+	@if grep -q "java.util.concurrent" $(WIKIDATA)/links.csv; then echo "Wikidata stopped the query halfway. Run make refresh again."; exit 1; fi
 	$(PYTHON) data_wikipedia_titles.py
+	$(PYTHON) data_link.py
+	$(PYTHON) data_wikipedia.py
+	cp $(WIKIDATA)/links.csv $(WIKIDATA)/wikipedia_titles.csv $(WIKIPEDIA)/film_articles.jsonl $(SNAPSHOT)
 
 inspect: requirements collect
 	mkdir -p $(INSPECTION)
@@ -62,9 +73,9 @@ link: requirements collect
 
 wikipedia: $(WIKIPEDIA)/film_articles.jsonl
 
-$(WIKIPEDIA)/film_articles.jsonl: data_wikipedia.py $(WIKIDATA)/wikipedia_titles.csv | link
+$(WIKIPEDIA)/film_articles.jsonl: $(SNAPSHOT)/film_articles.jsonl
 	mkdir -p $(WIKIPEDIA)
-	$(PYTHON) data_wikipedia.py
+	cp $(SNAPSHOT)/film_articles.jsonl $(WIKIPEDIA)/film_articles.jsonl
 
 cleaning: link
 	@test -f $(SCRAPED)/full_reviews.jsonl || echo "WARNING: $(SCRAPED)/full_reviews.jsonl not found, so critic reviews will only have their short quotes. See README.md."
@@ -89,4 +100,4 @@ scrape: link
 
 .DELETE_ON_ERROR:
 
-.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata inspect link wikipedia cleaning sample merge analysis scrape
+.PHONY: all clean requirements collect imdb_spoiler rotten_tomatoes wikidata refresh inspect link wikipedia cleaning sample merge analysis scrape

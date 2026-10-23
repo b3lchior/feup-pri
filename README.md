@@ -46,17 +46,16 @@ cd pipeline
 make
 ```
 
-The first run downloads about 500 MB from Kaggle, the links from Wikidata, and the English Wikipedia article of every film (about 1,500 requests, roughly 12 minutes). After that, `make` takes about 2 minutes, charts included, and never downloads twice: a download is only repeated if its file is deleted or the query or script that produces it changes.
+The first run downloads about 500 MB from Kaggle (pinned versions). The IMDb ↔ Rotten Tomatoes links from Wikidata, the Wikipedia titles and the Wikipedia article of every film are not downloaded from the live sites: they are copied from the `snapshot/` folder of this repository, taken on 2026-10-23, so every machine builds the same documents. After the first run, `make` takes about 2 minutes, charts included, and never downloads twice: a download is only repeated if its file is deleted.
 
 **4. Use the results** in `data/documents/`:
 
 | File | Contents |
 |---|---|
-| `reviews.jsonl` | 438,157 review documents, one per line: 179,018 critic and 259,139 audience reviews about 1,492 films |
-| `films.jsonl` | 1,492 film documents, each with its full English Wikipedia article when one exists (all films but one) |
+| `reviews.jsonl` | 438,629 review documents, one per line: 179,290 critic and 259,339 audience reviews about 1,493 films |
+| `films.jsonl` | 1,493 film documents, each with its full English Wikipedia article when one exists (all films but one) |
 | `merge_stats.csv` | document counts |
 
-Each review document has its text (`text`, plus `text_kind`: `full` or `quote`), its perspective (`critic` or `audience`), its score on a 0–1 scale, author, date and other details, and a copy of its film's details (`film_title`, `film_year`, `film_genres`, `film_plot_summary`, `film_tomatometer`…). The Wikipedia fields are only in `films.jsonl`.
 
 ## Pipeline stages
 
@@ -66,15 +65,16 @@ All commands run from the `pipeline/` folder.
 |---|---|---|
 | `make` | Runs every stage below, in order | |
 | `make requirements` | Creates `.venv/` and installs `requirements.txt` | `.venv/` |
-| `make collect` | Downloads IMDb Spoiler (Kaggle, version 1), Rotten Tomatoes/Clapper (Kaggle, version 4), the IMDb ↔ Rotten Tomatoes links from Wikidata, and the English Wikipedia title of each of our films from the Wikidata API | `data/raw/` |
+| `make collect` | Downloads IMDb Spoiler (Kaggle, version 1) and Rotten Tomatoes/Clapper (Kaggle, version 4), and copies the IMDb ↔ Rotten Tomatoes links and the English Wikipedia title of each of our films from `snapshot/` | `data/raw/` |
 | `make link` | Matches IMDb and Rotten Tomatoes films through Wikidata and keeps only our films | `data/linked/` |
-| `make wikipedia` | Downloads the full plain-text English Wikipedia article of each linked film through the MediaWiki API (only once) | `data/raw/wikipedia/film_articles.jsonl` |
+| `make wikipedia` | Copies the full plain-text English Wikipedia article of each linked film from `snapshot/` | `data/raw/wikipedia/film_articles.jsonl` |
 | `make cleaning` | Removes duplicates and placeholders, fixes dates, scores and formats, attaches the scraped full texts | `data/processed/`, with `cleaning_stats.csv` |
 | `make sample` | Keeps the films with both critic and audience reviews, at most 200 reviews per film from each source | `data/sampled/`, with `sample_stats.csv` |
 | `make merge` | Builds the final documents | `data/documents/` |
 | `make analysis` | Exploratory analysis of the final documents: charts (PNG and PDF) and their figures | `data/analysis/`, with `analysis_stats.csv` and `distinctive_words.csv` |
 | `make inspect` | Optional: data-quality report for each raw Kaggle file (needs about 4.5 GB of memory) | `data/inspection/` |
-| `make clean` | Deletes everything the pipeline generated, except `data/scraped/` | |
+| `make refresh` | Optional, and it changes the documents: queries Wikidata and Wikipedia again (about 12 minutes) and replaces the files in `snapshot/`. Run it only to update the collection on purpose, then commit the new snapshot | `snapshot/` |
+| `make clean` | Deletes everything the pipeline generated, except `data/scraped/` and `snapshot/` | |
 
 To rebuild everything from scratch: `make clean all`.
 
@@ -84,13 +84,17 @@ To rebuild everything from scratch: `make clean all`.
 feup-pri/
 ├── README.md
 ├── requirements.txt               Python packages, all with pinned versions
+├── snapshot/                      the data taken from Wikidata and Wikipedia on 2026-10-23
+│   ├── links.csv                  IMDb ↔ Rotten Tomatoes links
+│   ├── wikipedia_titles.csv       English Wikipedia title of each film
+│   └── film_articles.jsonl        English Wikipedia article of each film
 └── pipeline/
     ├── makefile                   the pipeline stages
-    ├── wikidata_links.rq          Wikidata query for the IMDb ↔ Rotten Tomatoes links
-    ├── data_wikipedia_titles.py   English Wikipedia titles from the Wikidata API (make collect)
+    ├── wikidata_links.rq          Wikidata query for the IMDb ↔ Rotten Tomatoes links (make refresh)
+    ├── data_wikipedia_titles.py   English Wikipedia titles from the Wikidata API (make refresh)
     ├── data_inspect.py            make inspect
     ├── data_link.py               make link
-    ├── data_wikipedia.py          make wikipedia
+    ├── data_wikipedia.py          English Wikipedia articles through the MediaWiki API (make refresh)
     ├── data_clean.py              make cleaning
     ├── data_sample.py             make sample
     ├── data_merge.py              make merge

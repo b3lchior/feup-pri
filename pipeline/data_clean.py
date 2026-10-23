@@ -13,7 +13,7 @@ PROCESSED = "../data/processed"
 SCRAPED = "../data/scraped/full_reviews.jsonl"
 
 PLACEHOLDER = r"(full review|click|see (the )?full|for (the )?full|read (the )?(full|complete|my|our|more)|review in|podcast review|parental content review|\(?no quote available)"
-TRANSLATED = r"\s*\[full review in [^\]]*\]\s*$"
+FULL_REVIEW_TAG = r"\s*\[full review in [^\]]*\]\s*$"
 CREDIT = r"\s{2,}Written by\n[^\n]*$"
 GRADES = ["F", "D-", "D", "D+", "C-", "C", "C+", "B-", "B", "B+", "A-", "A", "A+"]
 MONEY = {"": 1, "K": 1_000, "M": 1_000_000, "B": 1_000_000_000}
@@ -57,8 +57,7 @@ def clean_rt_reviews():
     reviews = pd.read_json(f"{LINKED}/rt_reviews.jsonl", lines=True, dtype=False, convert_dates=False)
     log("rt_reviews", "linked", len(reviews))
     reviews["reviewText"] = decode_html(reviews["reviewText"])
-    reviews["translated"] = reviews["reviewText"].str.contains(TRANSLATED, case=False)
-    reviews["reviewText"] = reviews["reviewText"].str.replace(TRANSLATED, "", case=False, regex=True)
+    reviews["reviewText"] = reviews["reviewText"].str.replace(FULL_REVIEW_TAG, "", case=False, regex=True)
     reviews = reviews.drop_duplicates()
     log("rt_reviews", "without exact duplicates", len(reviews))
     reviews = reviews[reviews["reviewText"] != ""]
