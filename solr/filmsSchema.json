@@ -1,0 +1,81 @@
+{
+  "add-field-type": [
+    {
+      "name": "filmText",
+      "class": "solr.TextField",
+      "indexAnalyzer": {
+        "tokenizer": {
+          "class": "solr.StandardTokenizerFactory"
+        },
+        "filters": [
+          {
+            "class": "solr.ASCIIFoldingFilterFactory",
+            "preserveOriginal": true
+          },
+          {
+            "class": "solr.LowerCaseFilterFactory"
+          }
+        ]
+      },
+      "queryAnalyzer": {
+        "tokenizer": {
+          "class": "solr.StandardTokenizerFactory"
+        },
+        "filters": [
+          {
+            "class": "solr.ASCIIFoldingFilterFactory",
+            "preserveOriginal": true
+          },
+          {
+            "class": "solr.LowerCaseFilterFactory"
+          }
+        ]
+      }
+    },
+    {
+      "name": "filmId",
+      "class": "solr.StrField",
+      "docValues": true
+    },
+    {
+      "name": "filmInt",
+      "class": "solr.IntPointField",
+      "docValues": true
+    },
+    {
+      "name": "filmLong",
+      "class": "solr.LongPointField",
+      "docValues": true
+    },
+    {
+      "name": "filmFloat",
+      "class": "solr.FloatPointField",
+      "docValues": true
+    },
+    {
+      "name": "filmDate",
+      "class": "solr.DatePointField",
+      "docValues": true
+    }
+  ],
+  "add-field": [
+    {"name": "imdb_id","type": "filmId","indexed": true,"stored": true,"multiValued": false},
+    {"name": "wikidata_id","type": "filmId","indexed": true,"stored": true,"multiValued": false},
+    {"name": "rt_id","type": "filmId","indexed": true,"stored": true,"multiValued": false},
+    {"name": "title","type": "filmText","indexed": true,"stored": true,"multiValued": false},
+    {"name": "plot_summary","type": "filmText","indexed": true,"stored": true,"multiValued": false},
+    {"name": "genres","type": "filmId","indexed": true,"stored": true,"multiValued": true},
+    {"name": "directors","type": "filmId","indexed": true,"stored": true,"multiValued": true},
+    {"name": "writers","type": "filmId","indexed": true,"stored": true,"multiValued": true},
+    {"name": "distributor","type": "filmId","indexed": true,"stored": true,"multiValued": false},
+    {"name": "original_language","type": "filmId","indexed": true,"stored": true,"multiValued": false},
+    {"name": "content_rating","type": "filmId","indexed": true,"stored": true,"multiValued": false},
+    {"name": "release_date","type": "filmDate","indexed": true,"stored": true,"multiValued": false},
+    {"name": "year","type": "filmInt","indexed": true,"stored": true,"multiValued": false},
+    {"name": "duration_minutes","type": "filmInt","indexed": true,"stored": true,"multiValued": false},
+    {"name": "imdb_rating","type": "filmFloat","indexed": true,"stored": true,"multiValued": false},
+    {"name": "tomatometer","type": "filmInt","indexed": true,"stored": true,"multiValued": false},
+    {"name": "audience_score","type": "filmInt","indexed": true,"stored": true,"multiValued": false},
+    {"name": "box_office","type": "filmLong","indexed": true,"stored": true,"multiValued": false}
+  ]
+}
