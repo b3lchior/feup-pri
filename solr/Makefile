@@ -8,7 +8,7 @@ CORE := reviews
 SOURCE := ../data/documents/reviews.jsonl
 INDEX := ../data/solr/home
 
-.PHONY: all up schema populate down clean
+.PHONY: all up schema populate down clean trec_eval
 
 all: up schema populate
 
@@ -21,7 +21,7 @@ schema:
 	@if curl -sf $(SOLR)/$(CORE)/schema/fields/film_imdb_id > /dev/null; then \
 		echo "schema already loaded (run make clean to start over)"; \
 	else \
-		curl -s --fail-with-body -X POST -H 'Content-Type: application/json' --data-binary @schema.json $(SOLR)/$(CORE)/schema; \
+		curl -s --fail-with-body -X POST -H 'Content-Type: application/json' --data-binary @baseline_schema.json $(SOLR)/$(CORE)/schema; \
 	fi
 
 populate: $(SOURCE)
@@ -33,3 +33,7 @@ down:
 clean:
 	docker compose down
 	rm -rf $(INDEX)
+
+trec_eval:
+	git clone https://github.com/usnistgov/trec_eval.git trec_eval
+	$(MAKE) -C trec_eval
