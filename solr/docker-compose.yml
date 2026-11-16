@@ -1,0 +1,14 @@
+name: prreviews
+
+services:
+  solr:
+    container_name: solr_reviews
+    image: solr:10
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    ports:
+      - "8983:8983"
+    environment:
+      SOLR_HEAP: 2g
+    volumes:
+      - ../data/solr/home:/var/solr
+    command: solr-precreate reviews

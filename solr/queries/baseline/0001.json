@@ -1,0 +1,12 @@
+{
+    "query": "audiences liked the film although critics disliked it",
+    "fields": "film_imdb_id, film_title, film_year, film_tomatometer, film_audience_score, film_imdb_rating, perspective, score",
+    "params": {
+        "defType": "edismax",
+        "qf": "text summary quote",
+        "group": "true",
+        "group.field": "film_imdb_id",
+        "group.main": "true",
+        "rows": "30"
+    }
+}

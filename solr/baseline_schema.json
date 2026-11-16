@@ -1,0 +1,53 @@
+{
+    "add-field-type": [
+        {
+            "name": "largeText",
+            "class": "solr.TextField",
+            "indexAnalyzer": {
+                "tokenizer": {
+                    "class": "solr.StandardTokenizerFactory"
+                },
+                "filters": [
+                    {"class": "solr.ASCIIFoldingFilterFactory", "preserveOriginal": true},
+                    {"class": "solr.LowerCaseFilterFactory"}
+                ]
+            },
+            "queryAnalyzer": {
+                "tokenizer": {
+                    "class": "solr.StandardTokenizerFactory"
+                },
+                "filters": [
+                    {"class": "solr.ASCIIFoldingFilterFactory", "preserveOriginal": true},
+                    {"class": "solr.LowerCaseFilterFactory"}
+                ]
+            }
+        }
+    ],
+    "add-field": [
+        {"name": "perspective", "type": "string", "docValues": true},
+        {"name": "text", "type": "largeText"},
+        {"name": "text_kind", "type": "string", "docValues": true},
+        {"name": "summary", "type": "largeText"},
+        {"name": "quote", "type": "largeText"},
+        {"name": "score", "type": "pfloat", "docValues": true},
+        {"name": "original_score", "type": "string", "indexed": false},
+        {"name": "verdict", "type": "string", "docValues": true},
+        {"name": "is_spoiler", "type": "boolean", "docValues": true},
+        {"name": "top_critic", "type": "boolean", "docValues": true},
+        {"name": "author", "type": "string", "docValues": true},
+        {"name": "publication", "type": "string", "docValues": true},
+        {"name": "date", "type": "pdate", "docValues": true},
+        {"name": "url", "type": "string", "indexed": false},
+        {"name": "word_count", "type": "pint", "docValues": true},
+        {"name": "language", "type": "string", "docValues": true},
+        {"name": "film_imdb_id", "type": "string", "docValues": true},
+        {"name": "film_wikidata_id", "type": "string", "docValues": true},
+        {"name": "film_title", "type": "largeText"},
+        {"name": "film_year", "type": "pint", "docValues": true},
+        {"name": "film_genres", "type": "string", "multiValued": true, "docValues": true},
+        {"name": "film_plot_summary", "type": "largeText", "stored": false},
+        {"name": "film_imdb_rating", "type": "pfloat", "docValues": true},
+        {"name": "film_tomatometer", "type": "pint", "docValues": true},
+        {"name": "film_audience_score", "type": "pint", "docValues": true}
+    ]
+}
