@@ -7,8 +7,9 @@ SOLR := http://localhost:8983/solr
 CORE := reviews
 SOURCE := ../data/documents/reviews.jsonl
 INDEX := ../data/solr/home
+IMPROVED_CORE := reviews_improved
 
-.PHONY: all up schema populate down clean trec_eval
+.PHONY: all up schema populate improved improved-schema down clean trec_eval
 
 all: up schema populate
 
@@ -26,6 +27,20 @@ schema:
 
 populate: $(SOURCE)
 	curl -s --fail-with-body -X POST -H 'Content-Type: application/json' -T $(SOURCE) '$(SOLR)/$(CORE)/update/json/docs?commit=true'
+
+improved: improved-schema
+	$(MAKE) populate CORE=$(IMPROVED_CORE)
+
+improved-schema: up
+	@if ! curl -sf $(SOLR)/$(IMPROVED_CORE)/admin/ping > /dev/null; then \
+		docker compose exec -T solr solr create -c $(IMPROVED_CORE); \
+	fi
+	@if curl -sf $(SOLR)/$(IMPROVED_CORE)/schema/fieldtypes/review_text_en > /dev/null; then \
+		echo "improved schema already loaded; use a new IMPROVED_CORE after changing the schema or stopwords"; \
+	else \
+		docker compose cp config/stopwords_en.txt solr:/var/solr/data/$(IMPROVED_CORE)/conf/stopwords_en.txt && \
+		curl -s --fail-with-body -X POST -H 'Content-Type: application/json' --data-binary @improved_schema.json $(SOLR)/$(IMPROVED_CORE)/schema; \
+	fi
 
 down:
 	docker compose down
