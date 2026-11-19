@@ -9,7 +9,7 @@ SOURCE := ../data/documents/reviews.jsonl
 INDEX := ../data/solr/home
 IMPROVED_CORE := reviews_improved
 
-.PHONY: all up schema populate improved improved-schema down clean trec_eval
+.PHONY: all up schema populate improved improved-schema down clean trec_eval pool evaluate
 
 all: up schema populate
 
@@ -52,3 +52,12 @@ clean:
 trec_eval:
 	git clone https://github.com/usnistgov/trec_eval.git trec_eval
 	$(MAKE) -C trec_eval
+
+pool:
+	./scripts/pool_sheet.py --run queries/improved:$(IMPROVED_CORE) --run queries/baseline:$(IMPROVED_CORE) --judged queries/baseline:$(CORE)
+
+evaluate:
+	./evaluate.sh queries/baseline qrels $(CORE) results/baseline
+	./evaluate.sh queries/baseline qrels $(IMPROVED_CORE) results/analysis_only
+	./evaluate.sh queries/improved qrels $(IMPROVED_CORE) results/improved
+	./scripts/compare.py results/baseline results/analysis_only results/improved

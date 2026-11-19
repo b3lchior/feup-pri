@@ -1,0 +1,21 @@
+{
+    "query": "films where the audience found the story confusing",
+    "fields": "film_imdb_id, film_title, film_year, film_tomatometer, film_audience_score, film_imdb_rating, perspective, score",
+    "filter": [
+        "language:en",
+        "perspective:audience"
+    ],
+    "params": {
+        "defType": "edismax",
+        "qf": "text summary^2 quote^2 film_plot_summary",
+        "pf2": "text^2 summary^4 quote^4",
+        "ps2": "2",
+        "pf3": "text^2 summary^4 quote^4",
+        "ps3": "2",
+        "mm": "2<-25% 9<-3",
+        "group": "true",
+        "group.field": "film_imdb_id",
+        "group.main": "true",
+        "rows": "30"
+    }
+}
